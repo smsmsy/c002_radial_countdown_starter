@@ -5,9 +5,15 @@ void main() {
   runApp(const MainApp());
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends StatefulWidget {
   const MainApp({super.key});
 
+  @override
+  State<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends State<MainApp> {
+  bool useCustomPainter = false;
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -15,15 +21,25 @@ class MainApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
-      home: const Scaffold(
+      home: Scaffold(
         body: Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
           child: Center(
             child: SizedBox(
               width: 300, // max allowed width
-              child: CountdownAndRestart(),
+              child: CountdownAndRestart(
+                useCustomPainter: useCustomPainter,
+              ),
             ),
           ),
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () {
+            setState(() {
+              useCustomPainter = !useCustomPainter;
+            });
+          },
+          label: Text("UseCustomPainter : $useCustomPainter"),
         ),
       ),
     );
@@ -32,7 +48,12 @@ class MainApp extends StatelessWidget {
 
 /// Main demo UI (countdown + restart button)
 class CountdownAndRestart extends StatefulWidget {
-  const CountdownAndRestart({super.key});
+  const CountdownAndRestart({
+    super.key,
+    this.useCustomPainter = false,
+  });
+
+  final bool useCustomPainter;
 
   @override
   CountdownAndRestartState createState() => CountdownAndRestartState();
@@ -95,33 +116,29 @@ class CountdownAndRestartState extends State<CountdownAndRestart>
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            TimerCircleWidget(
-              value: _value,
-            ),
-            Text(
-              _counter > _maxCounter
-                  ? "0"
-                  : ((_maxCounter - _counter) / 1000000).ceil().toString(),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 120,
-                color: Theme.of(context).primaryColor,
+    return AspectRatio(
+      aspectRatio: 4 / 5,
+      child: Stack(
+        children: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              widget.useCustomPainter
+                  ? TimerCircleWidgetUseCustomPainter(value: _indicatorValue)
+                  : TimerCircleWidget(value: _indicatorValue),
+              Text(
+                _counterValue,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 120,
+                  color: Theme.of(context).primaryColor,
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            ElevatedButton(
+            ],
+          ),
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: ElevatedButton(
               onPressed: () {
                 _paused ? onResumed() : onPaused();
               },
@@ -131,8 +148,10 @@ class CountdownAndRestartState extends State<CountdownAndRestart>
                 textAlign: TextAlign.center,
               ),
             ),
-            const SizedBox(width: 8),
-            ElevatedButton(
+          ),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: ElevatedButton(
               onPressed: () {
                 resetTimer();
               },
@@ -142,14 +161,19 @@ class CountdownAndRestartState extends State<CountdownAndRestart>
                 textAlign: TextAlign.center,
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 8),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
-  double get _value =>
+  String get _counterValue {
+    return _counter > _maxCounter
+        ? "0"
+        : ((_maxCounter - _counter) / 1000000).ceil().toString();
+  }
+
+  double get _indicatorValue =>
       _counter > _maxCounter ? 0 : 1 - (_counter / _maxCounter);
 }
 
@@ -174,6 +198,35 @@ class TimerCircleWidget extends StatelessWidget {
           strokeAlign: CircularProgressIndicator.strokeAlignInside,
           valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
           backgroundColor: Theme.of(context).focusColor,
+        ),
+      ),
+    );
+  }
+}
+
+class TimerCircleWidgetUseCustomPainter extends StatelessWidget {
+  const TimerCircleWidgetUseCustomPainter({
+    super.key,
+    required this.value,
+  });
+
+  final double value;
+
+  static const _baseColor = Colors.lightGreen;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.square(
+      dimension: 300,
+      child: SizedBox.square(
+        dimension: 300,
+        child: CircularProgressIndicator(
+          value: value,
+          strokeWidth: 20,
+          strokeCap: StrokeCap.round,
+          strokeAlign: CircularProgressIndicator.strokeAlignInside,
+          valueColor: const AlwaysStoppedAnimation(_baseColor),
+          backgroundColor: _baseColor[100],
         ),
       ),
     );
