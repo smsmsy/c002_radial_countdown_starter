@@ -189,16 +189,13 @@ class TimerCircleWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox.square(
       dimension: 300,
-      child: SizedBox.square(
-        dimension: 300,
-        child: CircularProgressIndicator(
-          value: value,
-          strokeWidth: 20,
-          strokeCap: StrokeCap.round,
-          strokeAlign: CircularProgressIndicator.strokeAlignInside,
-          valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
-          backgroundColor: Theme.of(context).focusColor,
-        ),
+      child: CircularProgressIndicator(
+        value: value,
+        strokeWidth: 20,
+        strokeCap: StrokeCap.round,
+        strokeAlign: CircularProgressIndicator.strokeAlignInside,
+        valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
+        backgroundColor: Theme.of(context).focusColor,
       ),
     );
   }
