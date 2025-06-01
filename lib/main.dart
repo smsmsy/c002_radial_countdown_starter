@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 void main() {
   runApp(const MainApp());
@@ -9,15 +10,14 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Scaffold(
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+      ),
+      home: const Scaffold(
         body: Padding(
           padding: EdgeInsets.all(16.0),
-          // Use Center as layout has unconstrained width (loose constraints),
-          // together with SizedBox to specify the max width (tight constraints)
-          // See this thread for more info:
-          // https://twitter.com/biz84/status/1445400059894542337
           child: Center(
             child: SizedBox(
               width: 300, // max allowed width
@@ -38,29 +38,75 @@ class CountdownAndRestart extends StatefulWidget {
   CountdownAndRestartState createState() => CountdownAndRestartState();
 }
 
-class CountdownAndRestartState extends State<CountdownAndRestart> {
+class CountdownAndRestartState extends State<CountdownAndRestart>
+    with TickerProviderStateMixin {
   static const maxWidth = 300.0;
+  static const int _maxCounter = 10000000;
+
+  Duration _elapsed = Duration.zero;
+  late final Ticker _ticker;
+
+  int _counter = 0;
 
   @override
   void initState() {
     super.initState();
-    // TODO: Implement
+    _ticker = createTicker((elapsed) {
+      setState(() {
+        _elapsed = elapsed;
+        _counter = _elapsed.inMicroseconds;
+      });
+      if (_counter > _maxCounter) {
+        _ticker.stop();
+      }
+    });
+    _ticker.start();
+  }
+
+  void resetTimer() {
+    _ticker.stop();
+    setState(() {
+      _counter = 0;
+    });
+    _ticker.start();
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    print("current=$_counter, max=$_maxCounter, value=$_value");
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // TODO: Add countdown widget
-        const Text(
-          'Replace this Text widget with the custom countdown UI',
-          textAlign: TextAlign.center,
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            TimerCircleWidget(
+              value: _value,
+            ),
+            Text(
+              _counter > _maxCounter
+                  ? "0"
+                  : ((_maxCounter - _counter) / 1000000).ceil().toString(),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 120,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 8),
         ElevatedButton(
-          onPressed: () {}, // TODO: Implement
+          onPressed: () {
+            resetTimer();
+          },
           child: const Text(
             'Restart',
             style: TextStyle(fontSize: 32),
@@ -68,6 +114,50 @@ class CountdownAndRestartState extends State<CountdownAndRestart> {
           ),
         ),
       ],
+    );
+  }
+
+  double get _value =>
+      _counter > _maxCounter ? 0 : 1 - (_counter / _maxCounter);
+}
+
+class TimerCircleWidget extends StatelessWidget {
+  const TimerCircleWidget({
+    super.key,
+    required this.value,
+  });
+
+  final double value;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.square(
+      dimension: 300,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox.square(
+            dimension: 300,
+            child: CircularProgressIndicator(
+              value: value,
+              strokeWidth: 20,
+              strokeCap: StrokeCap.round,
+              strokeAlign: CircularProgressIndicator.strokeAlignInside,
+              color: Theme.of(context).primaryColor,
+            ),
+          ),
+          SizedBox.square(
+            dimension: 300,
+            child: CircularProgressIndicator(
+              value: 100,
+              strokeWidth: 20,
+              strokeCap: StrokeCap.round,
+              strokeAlign: CircularProgressIndicator.strokeAlignInside,
+              color: Theme.of(context).primaryColor.withAlpha(200),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
