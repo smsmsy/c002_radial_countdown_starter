@@ -48,13 +48,16 @@ class CountdownAndRestartState extends State<CountdownAndRestart>
 
   int _counter = 0;
 
+  int _cachedCounter = 0;
+  bool _paused = false;
+
   @override
   void initState() {
     super.initState();
     _ticker = createTicker((elapsed) {
       setState(() {
         _elapsed = elapsed;
-        _counter = _elapsed.inMicroseconds;
+        _counter = _elapsed.inMicroseconds + _cachedCounter;
       });
       if (_counter > _maxCounter) {
         _ticker.stop();
@@ -67,6 +70,8 @@ class CountdownAndRestartState extends State<CountdownAndRestart>
     _ticker.stop();
     setState(() {
       _counter = 0;
+      _cachedCounter = 0;
+      _paused = false;
     });
     _ticker.start();
   }
@@ -75,6 +80,17 @@ class CountdownAndRestartState extends State<CountdownAndRestart>
   void dispose() {
     _ticker.dispose();
     super.dispose();
+  }
+
+  void onPaused() {
+    _ticker.stop();
+    _paused = true;
+    _cachedCounter = _counter;
+  }
+
+  void onResumed() {
+    _paused = false;
+    _ticker.start();
   }
 
   @override
@@ -103,16 +119,33 @@ class CountdownAndRestartState extends State<CountdownAndRestart>
           ],
         ),
         const SizedBox(height: 8),
-        ElevatedButton(
-          onPressed: () {
-            resetTimer();
-          },
-          child: const Text(
-            'Restart',
-            style: TextStyle(fontSize: 32),
-            textAlign: TextAlign.center,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                _paused ? onResumed() : onPaused();
+              },
+              child: Text(
+                _paused ? "Resume" : "Pause",
+                style: const TextStyle(fontSize: 28),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              onPressed: () {
+                resetTimer();
+              },
+              child: const Text(
+                'Restart',
+                style: TextStyle(fontSize: 28),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
         ),
+        const SizedBox(height: 8),
       ],
     );
   }
