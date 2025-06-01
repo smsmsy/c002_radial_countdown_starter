@@ -4,9 +4,8 @@ This is the code for one of the challenges at [pro.codewithandrea.com](https://p
 
 ## How to run the project
 
-Open this in your favorite IDE, then run:
-
 ```zsh
-flutter pub get # to get all packages
+flutter pub get
+flutter create .
 flutter run
 ```
