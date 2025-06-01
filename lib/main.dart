@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -13,7 +15,7 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> {
-  bool useCustomPainter = false;
+  bool useCustomPainter = true;
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -193,7 +195,6 @@ class TimerCircleWidget extends StatelessWidget {
         value: value,
         strokeWidth: 20,
         strokeCap: StrokeCap.round,
-        strokeAlign: CircularProgressIndicator.strokeAlignInside,
         valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
         backgroundColor: Theme.of(context).focusColor,
       ),
@@ -215,17 +216,57 @@ class TimerCircleWidgetUseCustomPainter extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox.square(
       dimension: 300,
-      child: SizedBox.square(
-        dimension: 300,
-        child: CircularProgressIndicator(
+      child: CustomPaint(
+        painter: TimerCirclePainter(
+          baseColor: _baseColor,
           value: value,
-          strokeWidth: 20,
-          strokeCap: StrokeCap.round,
-          strokeAlign: CircularProgressIndicator.strokeAlignInside,
-          valueColor: const AlwaysStoppedAnimation(_baseColor),
-          backgroundColor: _baseColor[100],
         ),
       ),
     );
   }
+}
+
+class TimerCirclePainter extends CustomPainter {
+  final Color _baseColor;
+  final double _value;
+
+  TimerCirclePainter({
+    super.repaint,
+    required Color baseColor,
+    required double value,
+  })  : _baseColor = baseColor,
+        _value = value;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = _baseColor
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 20
+      ..style = PaintingStyle.stroke;
+
+    final path = Path()
+      ..addArc(
+        Rect.fromLTRB(0, 0, size.width, size.height),
+        3 * math.pi / 2,
+        2 * math.pi * _value,
+      );
+
+    canvas.drawPath(path, paint);
+
+    paint.color = _baseColor.withAlpha(100);
+
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height / 2),
+      size.height / 2,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(TimerCirclePainter oldDelegate) =>
+      oldDelegate._value != _value;
+
+  @override
+  bool shouldRebuildSemantics(TimerCirclePainter oldDelegate) => false;
 }
