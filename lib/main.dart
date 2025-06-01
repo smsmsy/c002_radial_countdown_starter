@@ -95,7 +95,6 @@ class CountdownAndRestartState extends State<CountdownAndRestart>
 
   @override
   Widget build(BuildContext context) {
-    print("current=$_counter, max=$_maxCounter, value=$_value");
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
